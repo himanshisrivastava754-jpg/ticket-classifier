@@ -1,0 +1,138 @@
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:Inter,Arial,sans-serif;
+  background:#06131f;
+  color:white;
+}
+
+.app{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:
+  radial-gradient(circle at top,#0b4f6c 0%,transparent 40%),
+  radial-gradient(circle at bottom right,#06364b 0%,transparent 45%),
+  #06131f;
+}
+
+h1{
+  font-size:3.5rem;
+  font-weight:700;
+  color:#6de5ff;
+  text-shadow:0 0 20px rgba(0,255,255,.45);
+  transition:.4s;
+}
+
+h1:hover{
+  transform:translateY(-5px);
+  text-shadow:0 0 35px cyan;
+}
+
+p{
+  margin-top:18px;
+  font-size:1.3rem;
+  color:#d6eaf5;
+}
+
+.app::before{
+  content:"";
+  position:fixed;
+  width:350px;
+  height:350px;
+  background:#00d5ff22;
+  border-radius:50%;
+  filter:blur(120px);
+  top:-100px;
+  left:-120px;
+  animation:float1 10s ease-in-out infinite;
+}
+
+.app::after{
+  content:"";
+  position:fixed;
+  width:350px;
+  height:350px;
+  background:#00ffbf18;
+  border-radius:50%;
+  filter:blur(120px);
+  right:-120px;
+  bottom:-100px;
+  animation:float2 12s ease-in-out infinite;
+}
+
+@keyframes float1{
+  50%{
+    transform:translateY(40px);
+  }
+}
+
+@keyframes float2{
+  50%{
+    transform:translateY(-40px);
+  }
+}
+
+/* New component styles */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  width:100%;
+  max-width:1000px;
+  padding:28px 24px;
+}
+
+.userCard{display:flex;gap:12px;align-items:center}
+.status{width:12px;height:12px;border-radius:50%;background:#444}
+.status.online{background:#26c281}
+.status.offline{background:#666}
+
+.heroCard{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.06));padding:20px;border-radius:12px;margin-top:18px;max-width:1000px}
+.heroCard h2{color:#9ff7ff}
+.heroCard textarea{width:100%;min-height:140px;padding:12px;border-radius:8px;border:1px solid #1f4f5f;background:rgba(255,255,255,0.02);color:#e6fbff}
+.bottomRow{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.bottomRow button{background:#06b6d4;color:#002; padding:10px 14px;border-radius:8px;border:none;cursor:pointer}
+.bottomRow button:disabled{opacity:.5;cursor:default}
+
+.resultCard{margin-top:18px;padding:12px;border-radius:8px;background:rgba(0,0,0,0.2)}
+.resultRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.badge{padding:6px 10px;border-radius:999px;background:#223; color:#bfefff}
+.badge.green{background:linear-gradient(90deg,#1f7a3a,#26c281)}
+.badge.yellow{background:linear-gradient(90deg,#b58900,#ffd966);color:#111}
+.badge.orange{background:linear-gradient(90deg,#c85a0a,#ffb37a);color:#111}
+.badge.red{background:linear-gradient(90deg,#b00020,#ff6b6b);color:#111;position:relative}
+.pulse{display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.25);box-shadow:0 0 12px rgba(255,0,0,0.6);margin-left:8px}
+
+.recommendation .card{background:#001f26;padding:12px;border-radius:8px;margin-top:8px}
+.progress{width:100%;height:12px;background:#0b2b33;border-radius:999px;margin-top:6px}
+.progress-bar{height:12px;background:linear-gradient(90deg,#06b6d4,#00ffbf);border-radius:999px}
+.warning{color:#ffcc00;margin-top:6px}
+.error{color:#ff6b6b;margin-top:8px}
+
+.overridePanel{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:12px}
+.overridePanel label{display:block;font-size:.9rem;margin-bottom:6px}
+.overridePanel select{width:100%;padding:8px;border-radius:6px;background:#042b33;border:1px solid #08323d;color:#eaf9fb}
+
+.audit{margin-top:14px}
+.audit-toggle{background:transparent;border:1px solid #1f4f5f;color:#bfefff;padding:8px 12px;border-radius:8px;cursor:pointer}
+.audit-card{margin-top:8px;padding:12px;background:#021d22;border-radius:8px}
+.card.small{padding:8px;background:#011316;border-radius:6px;overflow:auto}
+
+.footer{margin-top:12px;color:#9fd}
+
+.spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);border-top-color:#06b6d4;animation:spin 1s linear infinite;display:inline-block;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 0, 0, 0.6); opacity: 1; }
+  50% { box-shadow: 0 0 18px rgba(255, 0, 0, 1); opacity: 0.5; }
+}
+.pulse {
+  animation: pulse-glow 1.2s ease-in-out infinite;
+}
