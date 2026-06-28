@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 function Header() {
   const [user, setUser] = useState(null);
@@ -38,21 +38,21 @@ function Header() {
         <div>
           {loading && (
             <>
-              <h3>Loading User...</h3>
+            <h2>Loading User...</h2>
               <span>Fetching user details...</span>
             </>
           )}
 
           {error && (
             <>
-              <h3>Error</h3>
+              <h2>Error</h2>
               <span>{error}</span>
             </>
           )}
 
           {user && (
             <>
-              <h3>{user.name}</h3>
+              <h2>{user.name}</h2>
               <span>{user.email}</span>
             </>
           )}

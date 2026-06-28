@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 function AuditTrail({ latest }) {
   const [open, setOpen] = useState(false);

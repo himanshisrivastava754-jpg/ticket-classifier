@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { sanitizeInput, callGemini, saveAuditEntry, postAuditToServer, getLatestAudit } from "../lib/api";
 import AuditTrail from "./AuditTrail";
 
-// TRD-specified exact system prompt
 const SYSTEM_PROMPT = `You are a highly specialized, Level 4 IT Operations Support Engineer AI, designed for rapid, precise classification of inbound support tickets for OmniCorp Global. Your primary function is to analyze the user's provided complaint and extract critical information for triage. You must return a STRICT JSON object ONLY. The JSON object must contain the following keys: "category" (string, choose from: "Hardware Malfunction", "Software Bug/Issue", "Network Connectivity", "Account & Access Management", "Peripheral Support", "Security Incident", "Data Request/Recovery", "System Performance", "Application Integration", "Other"), "sub_category" (string, a more granular classification if applicable, e.g., "Laptop", "Printer", "VPN", "Password Reset", "Email Client", "ERP System", "Downtime", "Slow Performance", "Licensing", "Malware" - if no specific sub-category, return "General"), "urgency_score" (integer, 1-10, where 1 is low priority with minimal disruption, 10 is critical system down impacting core business functions), "impact_level" (string, choose from: "Individual User", "Team/Department", "Multiple Departments", "Enterprise-Wide"), "recommended_action" (string, a concise, 1-2 sentence suggested next step for the human agent, e.g., "Check user's AD account status."), and "confidence_score" (integer, 0-100, reflecting the AI's certainty in its classification). If the input is unclear, ambiguous, or insufficient for classification, set "category" to "Unclassified" and "confidence_score" to 0. Prioritize security incidents with an urgency_score of 9 or 10. For password reset requests, ensure "category" is "Account & Access Management" and "sub_category" is "Password Reset" with an urgency_score of 7.`;
 
-// TRD-specified exact values
 const DEFAULT_CATEGORIES = [
   "Hardware Malfunction",
   "Software Bug/Issue",
@@ -22,9 +20,7 @@ const DEFAULT_SUBCATS = ["General", "Laptop", "Printer", "VPN", "Password Reset"
 const IMPACT_LEVELS = ["Individual User", "Team/Department", "Multiple Departments", "Enterprise-Wide"];
 
 function Badge({ children, color }) {
-  return (
-    <span className={`badge ${color || "neutral"}`}>{children}</span>
-  );
+  return <span className={`badge ${color || "neutral"}`}>{children}</span>;
 }
 
 function Spinner() {
@@ -37,7 +33,6 @@ function generateSession() {
 
 function TicketAnalyzer() {
   const [text, setText] = useState("");
-  const [sanitized, setSanitized] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -45,16 +40,13 @@ function TicketAnalyzer() {
   const [sessionId] = useState(() => sessionStorage.getItem("tc_session_id") || generateSession());
   const [overrides, setOverrides] = useState(null);
   const [showOverride, setShowOverride] = useState(false);
-  // Fix: latestAudit as state so it refreshes after each classification
   const [latestAudit, setLatestAudit] = useState(() => getLatestAudit());
 
   useEffect(() => {
-    if (!sessionStorage.getItem("tc_session_id")) sessionStorage.setItem("tc_session_id", sessionId);
+    if (!sessionStorage.getItem("tc_session_id")) {
+      sessionStorage.setItem("tc_session_id", sessionId);
+    }
   }, [sessionId]);
-
-  useEffect(() => {
-    setSanitized(sanitizeInput(text));
-  }, [text]);
 
   const remaining = useMemo(() => 5000 - (text?.length || 0), [text]);
 
@@ -65,11 +57,11 @@ function TicketAnalyzer() {
     return "red";
   }
 
-  async function runAnalysis(useSanitized = true) {
+  async function runAnalysis() {
     setError(null);
     setLoading(true);
     setResult(null);
-    const payload = useSanitized ? sanitizeInput(text) : text;
+    const payload = sanitizeInput(text);
     const start = performance.now();
     try {
       const ai = await callGemini(payload, SYSTEM_PROMPT);
@@ -77,7 +69,6 @@ function TicketAnalyzer() {
       setResponseMs(ms);
       setResult(ai);
 
-      // TRD: telemetry log on every primary action
       console.log("[Analytics] User interacted with Support Ticket Classifier");
 
       const finalClassification = overrides ? { ...ai, overridden: overrides } : ai;
@@ -92,7 +83,6 @@ function TicketAnalyzer() {
       };
 
       saveAuditEntry(audit);
-      // Fix: refresh audit trail state immediately
       setLatestAudit(getLatestAudit());
 
       try {
@@ -100,7 +90,6 @@ function TicketAnalyzer() {
       } catch (e) {
         console.warn("Audit post failed", e);
       }
-
     } catch (err) {
       if (err.status === 401) setError("Unauthorized (401). Check API key.");
       else if (err.status === 403) setError("Forbidden (403). Permission denied.");
@@ -114,10 +103,6 @@ function TicketAnalyzer() {
     }
   }
 
-  function handleReclassify() {
-    runAnalysis(true);
-  }
-
   function applyOverride(field, value) {
     setOverrides((o) => ({ ...(o || {}), [field]: value }));
   }
@@ -125,12 +110,8 @@ function TicketAnalyzer() {
   return (
     <div className="heroCard">
       <h2>Support Ticket Analysis</h2>
+      <p>Enter the employee's complaint below. The AI will classify, prioritize and recommend the next action.</p>
 
-      <p>
-        Enter the employee's complaint below. The AI will classify, prioritize and recommend the next action.
-      </p>
-
-      {/* a11y: aria-label on textarea */}
       <textarea
         aria-label="Support ticket description"
         placeholder="Describe the IT issue here..."
@@ -141,25 +122,18 @@ function TicketAnalyzer() {
 
       <div className="bottomRow">
         <span>Characters Remaining : {remaining} / 5000</span>
-
         <div style={{ display: "flex", gap: 8 }}>
           <button
             aria-label="Analyze ticket"
-            onClick={() => runAnalysis(true)}
+            onClick={runAnalysis}
             disabled={loading || !text.trim()}
           >
-            {loading ? (
-              <>
-                <Spinner /> Analyzing...
-              </>
-            ) : (
-              "Analyze Ticket"
-            )}
+            {loading ? <><Spinner /> Analyzing...</> : "Analyze Ticket"}
           </button>
 
           <button
             aria-label="Reclassify ticket"
-            onClick={handleReclassify}
+            onClick={runAnalysis}
             disabled={loading || !result}
           >
             Reclassify
@@ -184,24 +158,33 @@ function TicketAnalyzer() {
             <Badge>{result.sub_category}</Badge>
             <Badge color={urgencyColor(result.urgency_score)}>
               Urgency: {result.urgency_score}
-              {urgencyColor(result.urgency_score) === "red" && <span className="pulse" aria-label="Critical urgency indicator" />}
+              {urgencyColor(result.urgency_score) === "red" && (
+                <span className="pulse" aria-label="Critical urgency indicator" />
+              )}
             </Badge>
             <Badge>Impact: {result.impact_level}</Badge>
           </div>
 
           <div className="recommendation">
-            <h4>Recommended Action</h4>
+            <h3>Recommended Action</h3>
             <div className="card">{result.recommended_action}</div>
           </div>
 
           <div style={{ marginTop: 12 }}>
-            {/* Fix: show percentage number as TRD requires */}
             <label>Confidence: {result.confidence_score}%</label>
-            <div className="progress" role="progressbar" aria-valuenow={result.confidence_score} aria-valuemin={0} aria-valuemax={100}>
+            <div
+              className="progress"
+              role="progressbar"
+              aria-valuenow={result.confidence_score}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
               <div className="progress-bar" style={{ width: `${result.confidence_score}%` }} />
             </div>
             {result.confidence_score < 50 && (
-              <div className="warning" role="alert">⚠ Review Required: Low Confidence ({result.confidence_score}%)</div>
+              <div className="warning" role="alert">
+                ⚠ Review Required: Low Confidence ({result.confidence_score}%)
+              </div>
             )}
           </div>
 
@@ -270,7 +253,7 @@ function TicketAnalyzer() {
                     const final = { ...result, ...overrides };
                     const audit = {
                       timestamp: new Date().toISOString(),
-                      original_input: sanitized,
+                      original_input: sanitizeInput(text),
                       ai_classification_results: result,
                       final_classification: { ...final, human_override: true },
                       user_action: "human_override",

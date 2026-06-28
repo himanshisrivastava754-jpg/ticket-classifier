@@ -3,6 +3,7 @@ export function sanitizeInput(text) {
   if (!text) return "";
   // Remove HTML tags and control characters
   const withoutTags = text.replace(/<[^>]*>/g, "");
+  // eslint-disable-next-line no-control-regex
   const withoutCtl = withoutTags.replace(/[\x00-\x1F\x7F]/g, "");
   // Trim and collapse whitespace
   return withoutCtl.trim().replace(/\s+/g, " ");
@@ -27,13 +28,8 @@ function hasRequiredKeys(obj) {
 }
 
 export async function callGemini(sanitizedText, systemPrompt = "") {
-  // This POST is handled by the gemini-proxy plugin in vite.config.js,
-  // which forwards it to the real Gemini REST API using the server-side key.
   const endpoint = `/api/gemini`;
 
-  // Correct Gemini generateContent request body:
-  //   - system_instruction carries the system prompt
-  //   - contents is an array of turns; a single user turn suffices here
   const body = {
     system_instruction: {
       parts: [{ text: systemPrompt }],
@@ -66,15 +62,11 @@ export async function callGemini(sanitizedText, systemPrompt = "") {
 
   const raw = await res.text();
 
-  // Parse the Gemini generateContent response shape:
-  // { candidates: [{ content: { parts: [{ text: "..." }] } }] }
   try {
     const parsed = JSON.parse(raw);
 
-    // If the top-level object already has the required classification keys, return directly
     if (hasRequiredKeys(parsed)) return parsed;
 
-    // Extract the text from the standard Gemini response path
     const candidateText =
       parsed?.candidates?.[0]?.content?.parts?.[0]?.text ??
       parsed?.candidates?.[0]?.content?.parts?.map?.((p) => p.text).join("") ??
@@ -84,10 +76,9 @@ export async function callGemini(sanitizedText, systemPrompt = "") {
       try {
         const fromCandidate = extractJsonFromString(candidateText);
         if (hasRequiredKeys(fromCandidate)) return fromCandidate;
-        // If extractJsonFromString gave us something without required keys, try direct parse
         const direct = JSON.parse(candidateText);
         if (hasRequiredKeys(direct)) return direct;
-        return fromCandidate; // return best-effort anyway
+        return fromCandidate;
       } catch {
         const err = new Error("Invalid JSON in model candidate text");
         err.code = "INVALID_JSON";
@@ -96,11 +87,9 @@ export async function callGemini(sanitizedText, systemPrompt = "") {
       }
     }
 
-    // Last resort: scan the full raw response for any JSON object
     return extractJsonFromString(raw);
   } catch (e) {
     if (e.code === "INVALID_JSON") throw e;
-    // If overall JSON parse failed, try to extract a JSON substring from raw text
     try {
       return extractJsonFromString(raw);
     } catch {
@@ -134,8 +123,6 @@ export function getLatestAudit() {
 }
 
 export async function postAuditToServer(entry) {
-  // Simulate sending an audit log to an external server. We attempt the POST
-  // but do not require success; failures are caught by caller.
   return fetch("https://api.example.com/v1/audit-log", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
